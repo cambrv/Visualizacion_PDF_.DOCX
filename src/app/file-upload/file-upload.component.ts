@@ -4,10 +4,12 @@ import { DomSanitizer } from '@angular/platform-browser';
 import * as mammoth from 'mammoth';
 import { CommonModule } from '@angular/common';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
+import { NgxDocViewerModule } from 'ngx-doc-viewer';
+import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-file-upload',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, NgxExtendedPdfViewerModule],
+  imports: [RouterOutlet, CommonModule, NgxExtendedPdfViewerModule, NgxDocViewerModule, FormsModule],
   templateUrl: './file-upload.component.html',
   styleUrl: './file-upload.component.css',
 })
@@ -17,8 +19,8 @@ export class FileUploadComponent implements OnInit {
   urlArchivo: string | undefined;
   archivoCargado: boolean = false;
   esPdf: boolean = false;
-  urlPrueba: any;
-
+  esPublica: boolean = false;
+  urlPublica: string | undefined;
   constructor(private sanitizer: DomSanitizer) {}
   ngOnInit() {
     //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
@@ -30,6 +32,17 @@ export class FileUploadComponent implements OnInit {
     if (target.files && target.files.length > 0) {
       this.archivoSeleccionado = target.files[0];
       this.nombreArchivo = this.archivoSeleccionado.name;
+    }
+  }
+
+  verDocx() {
+    if (this.urlPublica) {
+      this.esPublica = true;
+      this.archivoCargado = false;
+      console.log(this.urlPublica + ' WORD PUBLICO Visualizado correctamente');
+    } else {
+      this.esPublica = false;
+      console.log('No se ha ingresado ninguna URL');
     }
   }
 
@@ -47,12 +60,6 @@ export class FileUploadComponent implements OnInit {
         this.archivoCargado = true;
         console.log(this.urlArchivo + 'Visualizado correctamente');
       } else if (fileExtension === 'doc' || fileExtension === 'docx') {
-        // const objectURL = URL.createObjectURL(this.archivoSeleccionado);
-        // this.urlArchivo = objectURL;
-        //   this.urlPrueba = this.sanitizer.bypassSecurityTrustResourceUrl(
-        //     this.urlArchivo
-        //   );
-        //   console.log('Url' + this.urlPrueba);
           console.log('Archivo DOC o DOCX');
           const arrayBuffer = await this.archivoSeleccionado.arrayBuffer();
           const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
