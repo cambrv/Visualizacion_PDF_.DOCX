@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ApplicationConfig } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import * as mammoth from 'mammoth';
@@ -6,36 +6,85 @@ import { CommonModule } from '@angular/common';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { NgxDocViewerModule } from 'ngx-doc-viewer';
 import { FormsModule } from '@angular/forms';
+import { Storage } from '@angular/fire/storage';
+import {
+  FirebaseStorage,
+  provideStorage,
+  uploadBytesResumable,
+} from '@angular/fire/storage';
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from '@angular/fire/storage';
+import { Observable } from 'rxjs';
 @Component({
   selector: 'app-file-upload',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, NgxExtendedPdfViewerModule, NgxDocViewerModule, FormsModule],
+  imports: [
+    RouterOutlet,
+    CommonModule,
+    NgxExtendedPdfViewerModule,
+    NgxDocViewerModule,
+    FormsModule,
+  ],
   templateUrl: './file-upload.component.html',
   styleUrl: './file-upload.component.css',
 })
 export class FileUploadComponent implements OnInit {
-  archivoSeleccionado: File | undefined;
+  archivoSeleccionado!: File;
   nombreArchivo: string | undefined;
   urlArchivo: string | undefined;
-  archivoCargado: boolean = false;
-  esPdf: boolean = false;
-  esPublica: boolean = false;
   urlPublica: string | undefined;
-  constructor(private sanitizer: DomSanitizer) {}
+  urlFirebase: string | undefined;
+  archivoCargado: boolean = false;
+  esPublica: boolean = false;
+  esPdf: boolean = false;
+  tipoArchivo: string | undefined;
+
+  private readonly _storage = inject(Storage);
+
   ngOnInit() {
-    //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
-    //Add 'implements OnInit' to the class.
     this.urlArchivo = '';
   }
-  seleccionarArchivo(event: Event) {
+
+  seleccionarArchivo(event: any) {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
       this.archivoSeleccionado = target.files[0];
       this.nombreArchivo = this.archivoSeleccionado.name;
+      this.tipoArchivo = this.archivoSeleccionado.type;
     }
   }
 
-  verDocx() {
+  async subirArchivoDocx() {
+    if (this.archivoSeleccionado) {
+      const storageRef = ref(
+        this._storage,
+        `uploads/${this.archivoSeleccionado?.name}`
+      );
+      try {
+        const snapshot = await uploadBytesResumable(
+          storageRef,
+          this.archivoSeleccionado
+        );
+        this.urlFirebase = await getDownloadURL(snapshot.ref);
+        console.log('URL del archivo:', this.urlFirebase);
+        this.esPdf = false;
+        this.archivoCargado = true;
+        return this.urlFirebase;
+      } catch (error) {
+        console.error('Error al subir el archivo:', error);
+        return null;
+      }
+    } else {
+      alert('Seleccione un archivo');
+      return null;
+    }
+  }
+
+  verDocxConUrl() {
     if (this.urlPublica) {
       this.esPublica = true;
       this.archivoCargado = false;
@@ -46,30 +95,18 @@ export class FileUploadComponent implements OnInit {
     }
   }
 
-  async subirArchivo() {
+  async subirArchivoPdf() {
     if (this.archivoSeleccionado) {
       const fileExtension = this.archivoSeleccionado.name
         .split('.')
         .pop()
         ?.toLowerCase();
-
       if (fileExtension === 'pdf') {
         const objectURL = URL.createObjectURL(this.archivoSeleccionado);
         this.urlArchivo = objectURL;
         this.esPdf = true;
         this.archivoCargado = true;
         console.log(this.urlArchivo + 'Visualizado correctamente');
-      } else if (fileExtension === 'doc' || fileExtension === 'docx') {
-          console.log('Archivo DOC o DOCX');
-          const arrayBuffer = await this.archivoSeleccionado.arrayBuffer();
-          const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
-          this.urlArchivo = this.sanitizer
-            .bypassSecurityTrustHtml(html)
-            .toString();
-          this.esPdf = false;
-          this.archivoCargado = true;
-          console.log('Hola' + this.urlArchivo + 'DOCX correctamente');
-
       } else {
         alert(
           'Tipo de archivo no soportado. Por favor, suba un archivo PDF o DOCX.'
@@ -79,4 +116,5 @@ export class FileUploadComponent implements OnInit {
       alert('Seleccione un archivo');
     }
   }
+  
 }

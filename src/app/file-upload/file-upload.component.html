@@ -3,7 +3,7 @@
   <div class="upload-section d-flex justify-content-center align-items-center w-100 my-3">
     <div class="w-75">
       <div class="row">
-        <div class="col m-2">
+        <!-- <div class="col m-2"> -->
           <label for="formFile" class="form-label">Sube tus archivos</label>
           <div class="row mb-3 rounded-5 pt-3 pb-3" style="background-color: #f8f9fa;">
             <div class="col-md-8 d-flex justify-content-center align-items-center">
@@ -11,28 +11,32 @@
                 accept=".pdf,.docx">
             </div>
             <div class="col-md-4 d-flex justify-content-center align-items-center">
-              <button class="btn btn-primary border-0 rounded-3" style="background-color: #A55EB9;"
-                (click)="subirArchivo()">Visualizar</button>
+              <button *ngIf="tipoArchivo === 'application/pdf'"
+              class="btn btn-primary border-0 rounded-3" style="background-color: #A55EB9;"
+                (click)="subirArchivoPdf()">Visualizar</button>
+                <button *ngIf="tipoArchivo === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'"
+                class="btn btn-primary border-0 rounded-3" style="background-color: #A55EB9;"
+                  (click)="subirArchivoDocx()">Visualizar</button>
             </div>
-          </div>
-        </div>
-        <div class="col m-2">
-          <label for="formFile" class="form-label">O también</label>
-          <div class="row mb-3 rounded-5 pt-2 pb-2" style="background-color: #f8f9fa;">
+            </div>
+          <!-- </div> -->
+          <!-- <div class="col m-2">
+            <label for="formFile" class="form-label">O también</label>
+            <div class="row mb-3 rounded-5 pt-2 pb-2" style="background-color: #f8f9fa;">
             <div class="col-md-8 d-flex justify-content-center align-items-center">
               <label for="urlpublica" class="form-label">URL Pública:</label>
               <input type="text" class="form-control rounded-5" id="urlpublica" name="urlpublica"
-                [(ngModel)]="urlPublica">
+              [(ngModel)]="urlPublica">
             </div>
             <div class="col-md-4 d-flex justify-content-center align-items-center">
               <button class="btn btn-primary border-0 rounded-3" style="background-color: #A55EB9;"
-                (click)="verDocx()">Visualizar</button>
+              (click)="verDocxConUrl()">Visualizar</button>
             </div>
           </div>
-        </div>
+        </div> -->
+      </div>
       </div>
     </div>
-  </div>
 
   <div class="viewer-section w-100">
     <ng-container>
@@ -51,7 +55,9 @@
       <div>
         <div id="visor" class="text-center">
           <h2 style="color: #8A8A8A;">Estás viendo el archivo: {{ nombreArchivo }}</h2>
-          <div [innerHTML]="urlArchivo"></div>
+          <!-- <div [innerHTML]="urlArchivo"></div> -->
+          <ngx-doc-viewer [url]="urlFirebase ? urlFirebase : ''" viewer="google" style="width:100%; height:100vh;">
+          </ngx-doc-viewer>
           <!-- <iframe [src]='urlPrueba' width="1000px" height="1000px" frameborder="0"></iframe> -->
         </div>
       </div>
@@ -67,3 +73,6 @@
     </ng-container>
   </div>
 </div>
+<script>
+  window.addEventListener('touchstart', onTouchStart, { passive: true });
+</script>
